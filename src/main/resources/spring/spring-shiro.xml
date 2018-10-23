@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+       http://www.springframework.org/schema/beans/spring-beans.xsd">
+
+
+    <bean class="org.apache.shiro.spring.web.ShiroFilterFactoryBean" id="shiroFilter">
+        <property name="securityManager" ref="securityManager"/>
+        <property name="loginUrl" value="login"/>
+        <property name="unauthorizedUrl" value="404"/>
+        <property name="successUrl" value="welcome"/>
+        <property name="filterChainDefinitions">
+            <value>
+                /login=anon <!--不需要任何验证-->
+                /subLogin=anon
+                /index=anon
+                <!--一般采用注解-->
+                <!--/testRole=anon-->
+                <!--/testRole1=rolesOr["admin","admin1"]-->
+                <!--/testPerms = anon-->
+                <!--/testPerms1 = perms["list"]-->
+                <!--/testPerms2 = perms["list","user:updata"]-->
+                <!--/*=authc &lt;!&ndash;所有都要认证&ndash;&gt;-->
+                /*=user <!-- 表示记住密码或认证通过可以访问的页面-->
+            </value>
+        </property>
+        <property name="filters">
+            <map>
+                <entry key="rolesOr" value-ref="rolesOrFilter"/>
+            </map>
+        </property>
+    </bean>
+    <!-- 自定义权限filter -->
+    <bean id="rolesOrFilter" class="org.shiro.filter.RolesOrFilter"/>
+    <!-- 创建SecurityManager对象 -->
+    <bean class="org.apache.shiro.web.mgt.DefaultWebSecurityManager" id="securityManager">
+        <property name="realm" ref="customRealm"/>
+        <!--<property name="sessionManager" ref="sessionManager"/>-->
+        <!--<property name="cacheManager" ref="cacheManager"/>-->
+        <property name="rememberMeManager" ref="cookieRememberMeManager"/>
+    </bean>
+
+
+    <!-- 自定义Realm -->
+    <bean class="org.shiro.realm.CustomRealm" id="customRealm">
+        <property name="credentialsMatcher" ref="credentialsMatcher"/>
+    </bean>
+    <bean class="org.apache.shiro.authc.credential.HashedCredentialsMatcher" id="credentialsMatcher">
+        <property name="hashAlgorithmName" value="md5"/>
+        <property name="hashIterations" value="1"/>
+    </bean>
+    <!-- 自动登录 -->
+    <bean class="org.apache.shiro.web.mgt.CookieRememberMeManager" id="cookieRememberMeManager">
+        <property name="cookie" ref="cookie"/>
+    </bean>
+
+    <bean class="org.apache.shiro.web.servlet.SimpleCookie" id="cookie">
+        <constructor-arg name="name" value="rememberMe"/>
+        <property name="maxAge" value="20000000"/>
+    </bean>
+</beans>
